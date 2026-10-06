@@ -17,9 +17,15 @@
 - ✂️ **构图编辑**：旋转 / 镜像 / 滤镜（暖调、黑白）/ MediaPipe 人像虚化 / 构图复评 / ML Kit + ONNX 双引擎场景识别
 - 🎖️ **会员**：全部功能永久免费解锁（无支付、无云端校验）
 
+## UI（Compose 深色相机风格）
+
+- **Compose Material3 深色沉浸式主题**（琥珀金主色 + 青绿点缀，专业相机 App 风格，参考 Mola 相机）
+- 相机主界面：全屏实时预览 + 构图叠加（九宫格/主体框/引导线/三分点）+ **评分圆环动画** + 场景识别提示 + 滤镜横条（原图/暖调/镜像/黑白 + 人像虚化开关）+ 大快门
+- 编辑界面：大图展示 + 底部工具条（旋转/镜像/滤镜/虚化/AI分析/保存）+ 分析结果卡片 + 相册选择
+
 ## 技术栈
 
-- 业务层：Kotlin · AndroidX · CameraX（View 体系）
+- 业务层：Kotlin · Jetpack Compose · CameraX
 - AI 能力层：ONNX Runtime · MediaPipe Tasks · ML Kit ImageLabeling（均本地推理，无云端）
 - 构图引擎：自研经典 CV（Sobel / Hough / 显著性 / 五规则评分）
 
