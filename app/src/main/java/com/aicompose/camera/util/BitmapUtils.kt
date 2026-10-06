@@ -44,7 +44,7 @@ object BitmapUtils {
     fun scaleDown(bmp: Bitmap, maxSize: Int): Bitmap {
         val w = bmp.width
         val h = bmp.height
-        val scale = maxSize.toFloat() / max(w, h)
+        val scale = maxSize.toFloat() / kotlin.math.max(w, h)
         if (scale >= 1f) return bmp.copy(Bitmap.Config.ARGB_8888, false)
         return Bitmap.createScaledBitmap(bmp, (w * scale).toInt().coerceAtLeast(8), (h * scale).toInt().coerceAtLeast(8), true)
     }

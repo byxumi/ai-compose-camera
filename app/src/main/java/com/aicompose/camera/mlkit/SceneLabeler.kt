@@ -60,7 +60,7 @@ class SceneLabeler(private val context: Context) {
 
 /** 轻量 await 辅助（避免引入额外协程库 API 差异） */
 private suspend fun <T> com.google.android.gms.tasks.Task<T>.await(): T =
-    kotlinx.coroutines.suspendCancellableCoroutine { cont ->
+    kotlinx.coroutines.suspendCoroutine { cont ->
         addOnSuccessListener { cont.resume(it) }
         addOnFailureListener { cont.resumeWithException(it) }
     }

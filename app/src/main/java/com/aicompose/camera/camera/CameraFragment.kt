@@ -107,7 +107,6 @@ class CameraFragment : Fragment() {
                 }
             }
         }
-        scaled.recycle()
         requireActivity().runOnUiThread {
             overlay.result = result
             overlay.invalidate()

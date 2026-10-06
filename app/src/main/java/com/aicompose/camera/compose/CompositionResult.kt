@@ -12,7 +12,7 @@ data class GuideLine(
         val dx = p2.x - p1.x
         val dy = p2.y - p1.y
         val d = kotlin.math.atan2(dy.toDouble(), dx.toDouble())
-        return ((Math.toDegrees(d) % 180.0) + 180.0) % 180.0
+        return (((Math.toDegrees(d) % 180.0) + 180.0) % 180.0).toFloat()
     }
 }
 
