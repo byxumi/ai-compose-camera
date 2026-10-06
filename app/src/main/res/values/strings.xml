@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">AI 构图相机</string>
+    <string name="btn_features">查看已解锁功能</string>
+    <string name="btn_capture">拍照</string>
+    <string name="edit_title">构图编辑</string>
+    <string name="btn_rotate">旋转</string>
+    <string name="btn_mirror">镜像</string>
+    <string name="btn_filter">滤镜</string>
+    <string name="btn_pick">相册</string>
+    <string name="btn_blur">背景虚化</string>
+    <string name="btn_analyze">AI 构图分析</string>
+    <string name="btn_save">保存</string>
+</resources>

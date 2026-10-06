@@ -1,0 +1,5 @@
+<resources>
+    <style name="Theme.AIComposeCamera" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:statusBarColor">#101418</item>
+    </style>
+</resources>

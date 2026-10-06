@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="#14181C">
+
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="@string/edit_title" android:textColor="#FFFFFF"
+        android:textSize="17sp" android:padding="14dp" android:textStyle="bold"/>
+
+    <com.google.android.material.textview.MaterialTextView android:id="@+id/editScore"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:paddingHorizontal="14dp" android:textColor="#FFD54F" android:textSize="13sp"/>
+
+    <ImageView android:id="@+id/editImage"
+        android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"
+        android:scaleType="fitCenter" android:contentDescription="@string/edit_title"/>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:padding="10dp">
+
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnRotate"
+            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:text="@string/btn_rotate" android:layout_marginEnd="4dp"/>
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnMirror"
+            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:text="@string/btn_mirror" android:layout_marginEnd="4dp"/>
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnFilter"
+            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:text="@string/btn_filter" android:layout_marginEnd="4dp"/>
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnPick"
+            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:text="@string/btn_pick"/>
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical" android:paddingHorizontal="14dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@string/btn_blur" android:textColor="#FFFFFF" android:textSize="13sp"/>
+        <com.google.android.material.slider.Slider android:id="@+id/blurSlider"
+            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:valueFrom="0" android:valueTo="6" android:value="0"/>
+    </LinearLayout>
+
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:padding="10dp">
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnAnalyze"
+            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:text="@string/btn_analyze" android:layout_marginEnd="4dp"
+            android:backgroundTint="#2E7D32"/>
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnSave"
+            android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:text="@string/btn_save"/>
+    </LinearLayout>
+</LinearLayout>
