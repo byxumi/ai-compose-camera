@@ -68,9 +68,10 @@ class PortraitSegmenter(context: Context) {
 
     private fun readMaskFloat(maskImage: com.google.mediapipe.framework.image.MPImage): FloatArray {
         return try {
-            val container = maskImage.container
-            val m = container.javaClass.getMethod("getByteBuffer")
-            val bb = m.invoke(container) as java.nio.ByteBuffer
+            val getContainer = maskImage.javaClass.getMethod("getContainer")
+            val container = getContainer.invoke(maskImage)
+            val getBb = container.javaClass.getMethod("getByteBuffer")
+            val bb = getBb.invoke(container) as java.nio.ByteBuffer
             val fb = bb.asFloatBuffer()
             val arr = FloatArray(fb.remaining())
             fb.get(arr)
