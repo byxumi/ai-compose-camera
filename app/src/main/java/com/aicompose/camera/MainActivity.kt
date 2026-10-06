@@ -1,37 +1,44 @@
 package com.aicompose.camera
 
 import android.os.Bundle
-import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
-import com.aicompose.camera.camera.CameraFragment
-import com.aicompose.camera.vip.VipManager
-import com.google.android.material.button.MaterialButton
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import com.aicompose.camera.ui.CameraScreen
+import com.aicompose.camera.ui.EditScreen
+import com.aicompose.camera.ui.theme.AIComposeCameraTheme
 
-class MainActivity : AppCompatActivity() {
-
-    private var currentFragment: Fragment = CameraFragment()
-
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        // 会员状态（全免费）
-        findViewById<TextView>(R.id.vipBadge).text = "★ ${VipManager.vipLevel} · ${VipManager.vipExpire} · 全部功能已解锁"
-        findViewById<TextView>(R.id.featureList).text =
-            VipManager.unlockedFeatures.joinToString("\n") { "✓ $it" }
-
-        if (savedInstanceState == null) {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.fragmentContainer, CameraFragment())
-                .commit()
+        setContent {
+            AIComposeCameraTheme {
+                App()
+            }
         }
+    }
+}
 
-        findViewById<MaterialButton>(R.id.btnOpenFeatures).setOnClickListener {
-            // 免费版直接展示解锁列表，无任何付费弹窗
-            findViewById<TextView>(R.id.featureList).visibility =
-                if (findViewById<TextView>(R.id.featureList).visibility == android.view.View.VISIBLE)
-                    android.view.View.GONE else android.view.View.VISIBLE
+@Composable
+fun App() {
+    var screen by remember { mutableStateOf("camera") }
+    var editPath by remember { mutableStateOf<String?>(null) }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        when (screen) {
+            "camera" -> CameraScreen(
+                onCapture = { p -> editPath = p; screen = "edit" },
+                onOpenEditor = { p -> editPath = p; screen = "edit" }
+            )
+            else -> editPath?.let { path ->
+                EditScreen(
+                    initialPath = path,
+                    onBack = { screen = "camera" }
+                )
+            }
         }
     }
 }
