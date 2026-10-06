@@ -10,15 +10,18 @@
   - 三分法 / 对称 / 引导线 / 水平 / 留白 五项规则评分（0-100）
   - 显著性主体检测 + 实时构图引导线叠加（九宫格 + 主体框 + 三分点）
   - 实时构图建议
-- 🏷️ **ML Kit 场景识别**（bundled 模型，离线推理）：
-  - 实时低频标注（人物/风景/动物/美食/建筑/花卉/车辆…）
-  - 按场景给出针对性的构图建议
-- ✂️ **构图编辑**：旋转 / 镜像 / 滤镜（暖调、黑白）/ 背景虚化 / 构图复评 / 场景识别
+- 🏗️ **三层 AI 推理引擎**（对齐原版逆向架构，全部本地离线）：
+  - **ONNX Runtime**（SqueezeNet 细分类，assets 内置模型）——主力模型推理，细分类别并映射构图建议
+  - **MediaPipe Tasks**（selfie_segmenter 人像分割）——人像背景虚化，仅虚化背景保持人像清晰
+  - **ML Kit ImageLabeling**（bundled 模型）——实时场景标注（人物/风景/动物/美食/建筑/花卉/车辆…）
+- ✂️ **构图编辑**：旋转 / 镜像 / 滤镜（暖调、黑白）/ MediaPipe 人像虚化 / 构图复评 / ML Kit + ONNX 双引擎场景识别
 - 🎖️ **会员**：全部功能永久免费解锁（无支付、无云端校验）
 
 ## 技术栈
 
-Kotlin · CameraX · ML Kit ImageLabeling（bundled）· 自研 CV 构图引擎
+- 业务层：Kotlin · AndroidX · CameraX（View 体系）
+- AI 能力层：ONNX Runtime · MediaPipe Tasks · ML Kit ImageLabeling（均本地推理，无云端）
+- 构图引擎：自研经典 CV（Sobel / Hough / 显著性 / 五规则评分）
 
 ## 构建（GitHub Actions）
 
