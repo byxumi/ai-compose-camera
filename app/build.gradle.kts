@@ -34,5 +34,7 @@ dependencies {
     implementation("androidx.camera:camera-view:1.3.4")
     implementation("androidx.exifinterface:exifinterface:1.3.7")
     implementation("com.google.mlkit:image-labeling:17.0.0")
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.18.0")
+    implementation("com.google.mediapipe:tasks-vision:0.10.14")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 }

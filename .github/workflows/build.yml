@@ -17,10 +17,19 @@ jobs:
 
       - name: Setup Android SDK
         run: |
-          echo "y" | sudo "${ANDROID_HOME:-/usr/local/lib/android/sdk}/cmdline-tools/latest/bin/sdkmanager" \
-            "platforms;android-35" "build-tools;35.0.0" >/dev/null 2>&1 || \
           echo "y" | sudo /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager \
             "platforms;android-35" "build-tools;35.0.0" >/dev/null 2>&1 || true
+
+      - name: Download AI models into assets
+        run: |
+          mkdir -p app/src/main/assets
+          curl -sL -o app/src/main/assets/selfie_segmenter.tflite \
+            "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite"
+          curl -sL -o app/src/main/assets/squeezenet1.0-9.onnx \
+            "https://github.com/onnx/models/raw/main/validated/vision/classification/squeezenet/model/squeezenet1.0-9.onnx"
+          curl -sL -o app/src/main/assets/imagenet_labels.txt \
+            "https://storage.googleapis.com/download.tensorflow.org/data/ImageNetLabels.txt"
+          ls -la app/src/main/assets/
 
       - name: Build release APK
         run: ./gradlew assembleRelease --no-daemon

@@ -15,6 +15,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.exifinterface.media.ExifInterface
 import com.aicompose.camera.R
 import com.aicompose.camera.compose.CompositionAnalyzer
+import com.aicompose.camera.ml.OnnxClassifier
+import com.aicompose.camera.ml.PortraitSegmenter
 import com.aicompose.camera.mlkit.SceneLabeler
 import com.aicompose.camera.util.BitmapUtils
 import kotlinx.coroutines.CoroutineScope
@@ -66,7 +68,17 @@ class EditActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.btnPick).setOnClickListener { pickImage.launch("image/*") }
         findViewById<Slider>(R.id.blurSlider).addOnChangeListener { _, value, _ ->
             blurAmount = value.toInt()
-            applyTransform()
+            if (blurAmount > 0) {
+                val bmp = bitmap ?: return@addOnChangeListener
+                CoroutineScope(Dispatchers.Main).launch {
+                    // MediaPipe 人像分割：仅虚化背景，人像保持清晰
+                    val result = PortraitSegmenter(this@EditActivity).blurBackground(bmp, blurAmount)
+                    bitmap = result
+                    imageView.setImageBitmap(result)
+                }
+            } else {
+                applyTransform()
+            }
         }
         findViewById<MaterialButton>(R.id.btnSave).setOnClickListener { save() }
         findViewById<MaterialButton>(R.id.btnAnalyze).setOnClickListener {
@@ -75,12 +87,18 @@ class EditActivity : AppCompatActivity() {
             val r = CompositionAnalyzer().analyze(scaled)
             scaled.recycle()
             scoreText.text = "构图评分：${r.score}/100  「${r.tips.firstOrNull() ?: "优秀"}」"
-            // ML Kit 场景识别（本地 bundled 模型）
+            // ML Kit + ONNX 双引擎场景识别
             CoroutineScope(Dispatchers.Main).launch {
-                val labels = SceneLabeler(this@EditActivity).label(bmp)
-                val advice = SceneLabeler(this@EditActivity).adviceFrom(labels)
-                val labelStr = labels.take(3).joinToString("、") { it.text }
-                if (advice != null) { val cur = (scoreText.text ?: "").toString(); scoreText.text = cur + "\n[场景] " + labelStr + "\n" + advice }
+                val mlkit = SceneLabeler(this@EditActivity).label(bmp)
+                val onnx = OnnxClassifier(this@EditActivity).classify(bmp, 3)
+                val advice = OnnxClassifier(this@EditActivity).adviceFrom(onnx)
+                val labelStr = mlkit.take(3).joinToString("、") { it.text }
+                val onnxStr = onnx.joinToString("、") { it.name }
+                val cur = (scoreText.text ?: "").toString()
+                scoreText.text = cur +
+                    "\n[ML Kit] " + labelStr +
+                    "\n[ONNX] " + onnxStr +
+                    (if (advice != null) "\n" + advice else "")
             }
         }
     }
