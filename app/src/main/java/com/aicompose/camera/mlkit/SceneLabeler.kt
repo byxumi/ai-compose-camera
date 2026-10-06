@@ -6,7 +6,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabeling
 import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.suspendCoroutine
+import kotlin.coroutines.suspendCoroutine
 import kotlinx.coroutines.withContext
 
 /**
@@ -61,7 +61,7 @@ class SceneLabeler(private val context: Context) {
 
 /** 轻量 await 辅助（避免引入额外协程库 API 差异） */
 private suspend fun <T> com.google.android.gms.tasks.Task<T>.await(): T =
-    kotlinx.coroutines.suspendCoroutine { cont ->
+    suspendCoroutine { cont ->
         addOnSuccessListener { cont.resume(it) }
         addOnFailureListener { cont.resumeWithException(it) }
     }

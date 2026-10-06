@@ -80,7 +80,7 @@ class EditActivity : AppCompatActivity() {
                 val labels = SceneLabeler(this@EditActivity).label(bmp)
                 val advice = SceneLabeler(this@EditActivity).adviceFrom(labels)
                 val labelStr = labels.take(3).joinToString("、") { it.text }
-                if (advice != null) { val cur = scoreText.text ?: ""; scoreText.text = cur + "\n[场景] " + labelStr + "\n" + advice }
+                if (advice != null) { val cur = (scoreText.text ?: "").toString(); scoreText.text = cur + "\n[场景] " + labelStr + "\n" + advice }
             }
         }
     }
