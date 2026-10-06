@@ -41,9 +41,8 @@ class PortraitSegmenter(context: Context) {
                 val maskImage = result.confidenceMasks().get().first()
                 val maskW = maskImage.width
                 val maskH = maskImage.height
-                val mask = maskImage.buffer as FloatBuffer
-                val maskArr = FloatArray(mask.remaining())
-                mask.get(maskArr)
+                // container 为 package-private，通过反射读取 mask 的 float buffer
+                val maskArr = readMaskFloat(maskImage)
 
                 val out = src.copy(Bitmap.Config.ARGB_8888, true)
                 val w = out.width
@@ -66,6 +65,20 @@ class PortraitSegmenter(context: Context) {
                 out
             }.getOrElse { src.copy(Bitmap.Config.ARGB_8888, false) }
         }
+
+    private fun readMaskFloat(maskImage: com.google.mediapipe.framework.image.MPImage): FloatArray {
+        return try {
+            val container = maskImage.container
+            val m = container.javaClass.getMethod("getByteBuffer")
+            val bb = m.invoke(container) as java.nio.ByteBuffer
+            val fb = bb.asFloatBuffer()
+            val arr = FloatArray(fb.remaining())
+            fb.get(arr)
+            arr
+        } catch (e: Exception) {
+            FloatArray(maskImage.width * maskImage.height) { 1f }
+        }
+    }
 
     private fun blur(bmp: Bitmap, radius: Int): Bitmap {
         val out = bmp.copy(Bitmap.Config.ARGB_8888, true)
