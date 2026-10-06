@@ -61,8 +61,8 @@ fun CompositionOverlay(
         r.subjectCenter?.let { c ->
             val x = nx(c.x); val y = ny(c.y)
             val s = 12.dp.toPx()
-            drawLine(crossColor, Offset(x - s, y), Offset(x + s, y), Stroke(width = 1.8.dp.toPx()))
-            drawLine(crossColor, Offset(x, y - s), Offset(x, y + s), Stroke(width = 1.8.dp.toPx()))
+            drawLine(crossColor, Offset(x - s, y), Offset(x + s, y), strokeWidth = 1.8.dp.toPx())
+            drawLine(crossColor, Offset(x, y - s), Offset(x, y + s), strokeWidth = 1.8.dp.toPx())
         }
 
         // 引导线
@@ -80,8 +80,8 @@ fun CompositionOverlay(
             val s = 7.dp.toPx()
             for (i in 1..2) for (j in 1..2) {
                 val x = w * i / 3f; val y = h * j / 3f
-                drawLine(crossColor, Offset(x - s, y), Offset(x + s, y), Stroke(width = 1.6.dp.toPx()))
-                drawLine(crossColor, Offset(x, y - s), Offset(x, y + s), Stroke(width = 1.6.dp.toPx()))
+                drawLine(crossColor, Offset(x - s, y), Offset(x + s, y), strokeWidth = 1.6.dp.toPx())
+                drawLine(crossColor, Offset(x, y - s), Offset(x, y + s), strokeWidth = 1.6.dp.toPx())
             }
         }
     }
