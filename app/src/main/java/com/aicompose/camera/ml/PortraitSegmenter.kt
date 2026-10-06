@@ -38,7 +38,7 @@ class PortraitSegmenter(context: Context) {
             runCatching {
                 val mpImage: MPImage = BitmapImageBuilder(src).build()
                 val result = segmenter.segment(mpImage)
-                val maskImage = result.confidenceMasks().first()
+                val maskImage = result.confidenceMasks().get().first()
                 val maskW = maskImage.width
                 val maskH = maskImage.height
                 val mask = maskImage.buffer as FloatBuffer
