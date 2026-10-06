@@ -56,7 +56,7 @@ fun EditScreen(
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
         if (uri != null) {
             bitmap = runCatching {
-                val bmp = BitmapUtils.loadScaled(uri.toString(), 2048)
+                val bmp = BitmapUtils.loadScaled(uri.toString(), 2048) ?: return@runCatching null
                 applyOrientation(bmp, uri, context)
             }.getOrNull()
         }

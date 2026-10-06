@@ -6,7 +6,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.aicompose.camera.compose.CompositionResult
 
@@ -26,15 +25,15 @@ fun CompositionOverlay(
         val lineColor = Color(0xFFFFC107).copy(alpha = 0.9f)
         val subjectColor = Color(0xFF4CAF50).copy(alpha = 0.95f)
         val crossColor = Color(0xFFFFEB3B).copy(alpha = 0.95f)
-        val gridStroke = Stroke(width = 1.2.dp.toPx())
-        val lineStroke = Stroke(width = 2.6.dp.toPx())
+        val gridStrokeW = 1.2.dp.toPx()
+        val lineStrokeW = 2.6.dp.toPx()
 
         // 九宫格
         for (i in 1..2) {
             val x = w * i / 3f
-            drawLine(gridColor, Offset(x, 0f), Offset(x, h), gridStroke)
+            drawLine(gridColor, Offset(x, 0f), Offset(x, h), strokeWidth = gridStrokeW)
             val y = h * i / 3f
-            drawLine(gridColor, Offset(0f, y), Offset(w, y), gridStroke)
+            drawLine(gridColor, Offset(0f, y), Offset(w, y), strokeWidth = gridStrokeW)
         }
 
         val r = result ?: return@Canvas
@@ -71,7 +70,7 @@ fun CompositionOverlay(
                 lineColor,
                 Offset(nx(l.p1.x), ny(l.p1.y)),
                 Offset(nx(l.p2.x), ny(l.p2.y)),
-                lineStroke
+                strokeWidth = lineStrokeW
             )
         }
 

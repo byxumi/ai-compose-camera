@@ -12,6 +12,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,7 +33,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
@@ -45,13 +45,12 @@ import com.aicompose.camera.compose.CompositionResult
 import com.aicompose.camera.mlkit.SceneLabeler
 import com.aicompose.camera.util.BitmapUtils
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.concurrent.Executors
 
 /**
- * 相机主界面（Compose）—— Mola 风格深色沉浸式设计
+ * 相机主界面（Compose）—— 深色沉浸式设计
  * 实时预览 + 构图叠加 + 评分圆环 + 场景识别 + 滤镜条 + 大快门
  */
 @Composable
@@ -67,153 +66,161 @@ fun CameraScreen(
 
     var result by remember { mutableStateOf(CompositionResult.empty()) }
     var sceneAdvice by remember { mutableStateOf<String?>(null) }
-    var filterIndex by remember { mutableStateOf(0) }
+    var filterIndex by remember { mutableIntStateOf(0) }
     var blurEnabled by remember { mutableStateOf(false) }
+    val imageCapture = remember { mutableStateOf<ImageCapture?>(null) }
     var frameCount by remember { mutableIntStateOf(0) }
 
-    val imageCapture = remember { mutableStateOf<ImageCapture?>(null) }
-
-    // CameraX 绑定
-    AndroidView(
-        modifier = Modifier.fillMaxSize(),
-        factory = { ctx ->
-            val previewView = PreviewView(ctx).apply {
-                scaleType = PreviewView.ScaleType.FILL_CENTER
-            }
-            val providerFuture = ProcessCameraProvider.getInstance(ctx)
-            providerFuture.addListener({
-                val provider = providerFuture.get()
-                val preview = Preview.Builder().build().also {
-                    it.surfaceProvider = previewView.surfaceProvider
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+        // CameraX 预览
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { ctx ->
+                val previewView: PreviewView = PreviewView(ctx).apply {
+                    scaleType = PreviewView.ScaleType.FILL_CENTER
                 }
-                val capture = ImageCapture.Builder()
-                    .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
-                    .build()
-                imageCapture.value = capture
-                val analysis = ImageAnalysis.Builder()
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .build()
-                analysis.setAnalyzer(Executors.singleThreadExecutor()) { proxy ->
-                    analyzeFrame(proxy, analyzer, sceneLabeler, uiScope) { r, advice ->
-                        result = r
-                        if (advice != null) sceneAdvice = advice
-                    }
-                }
-                provider.unbindAll()
-                provider.bindToLifecycle(
-                    lifecycleOwner,
-                    CameraSelector.DEFAULT_BACK_CAMERA,
-                    preview, capture, analysis
-                )
-            }, ContextCompat.getMainExecutor(ctx))
-            previewView
-        }
-    )
-
-    // 构图叠加层
-    CompositionOverlay(result = result, modifier = Modifier.fillMaxSize())
-
-    // ===== 顶部信息区 =====
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent)))
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-    ) {
-        // 评分圆环 + 文本
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            ScoreRing(score = result.score)
-            Spacer(Modifier.width(12.dp))
-            Column {
-                Text(
-                    text = "构图评分",
-                    color = Color.White.copy(alpha = 0.7f),
-                    fontSize = 13.sp
-                )
-                Text(
-                    text = "${result.score} 分",
-                    color = Color(0xFFFFD54F),
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-        sceneAdvice?.let {
-            Spacer(Modifier.height(6.dp))
-            Text(
-                text = it,
-                color = Color.White.copy(alpha = 0.85f),
-                fontSize = 13.sp,
-                maxLines = 2
-            )
-        }
-    }
-
-    // ===== 底部控制区 =====
-    Column(
-        modifier = Modifier
-            .align(Alignment.BottomCenter)
-            .fillMaxWidth()
-            .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.75f))))
-            .padding(horizontal = 20.dp, vertical = 18.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // 滤镜条
-        FilterStrip(
-            selected = filterIndex,
-            blurEnabled = blurEnabled,
-            onSelect = { filterIndex = it },
-            onToggleBlur = { blurEnabled = !blurEnabled }
-        )
-        Spacer(Modifier.height(14.dp))
-
-        // 控制行：设置 | 快门 | 图库
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            IconButton(
-                onClick = { /* 设置页预留 */ },
-                modifier = Modifier.size(44.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.12f))
-            ) {
-                Icon(Icons.Filled.Settings, contentDescription = "设置", tint = Color.White)
-            }
-
-            // 大快门
-            ShutterButton(
-                onClick = {
-                    val cap = imageCapture.value ?: return@ShutterButton
-                    val file = File(context.cacheDir, "shot_${System.currentTimeMillis()}.jpg")
-                    cap.takePicture(
-                        ImageCapture.OutputFileOptions.Builder(file).build(),
-                        ContextCompat.getMainExecutor(context),
-                        object : ImageCapture.OnImageSavedCallback {
-                            override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                                onCapture(file.absolutePath)
-                            }
-                            override fun onError(exc: ImageCaptureException) {
-                                Log.e("Camera", "capture error", exc)
+                val providerFuture = ProcessCameraProvider.getInstance(ctx)
+                providerFuture.addListener({
+                    val provider = providerFuture.get()
+                    val preview = Preview.Builder().build()
+                    preview.setSurfaceProvider(previewView.getSurfaceProvider())
+                    val capture = ImageCapture.Builder()
+                        .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
+                        .build()
+                    imageCapture.value = capture
+                    val analysis = ImageAnalysis.Builder()
+                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                        .build()
+                    val executor = Executors.newSingleThreadExecutor()
+                    analysis.setAnalyzer(executor) { proxy ->
+                        val bitmap = BitmapUtils.proxyToBitmap(proxy) ?: return@setAnalyzer
+                        proxy.close()
+                        val scaled = BitmapUtils.scaleDown(bitmap, 320)
+                        val r = analyzer.analyze(scaled)
+                        bitmap.recycle()
+                        frameCount++
+                        if (frameCount % 45 == 0) {
+                            val copy = scaled.copy(Bitmap.Config.ARGB_8888, false)
+                            uiScope.launch {
+                                val labels = sceneLabeler.label(copy)
+                                sceneAdvice = sceneLabeler.adviceFrom(labels)
+                                copy.recycle()
                             }
                         }
+                        result = r
+                        scaled.recycle()
+                    }
+                    provider.unbindAll()
+                    provider.bindToLifecycle(
+                        lifecycleOwner,
+                        CameraSelector.DEFAULT_BACK_CAMERA,
+                        preview, capture, analysis
+                    )
+                }, ContextCompat.getMainExecutor(ctx))
+                previewView
+            }
+        )
+
+        // 构图叠加层
+        CompositionOverlay(result = result, modifier = Modifier.fillMaxSize())
+
+        // ===== 顶部信息区 =====
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopCenter)
+                .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent)))
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ScoreRing(score = result.score)
+                Spacer(Modifier.width(12.dp))
+                Column {
+                    Text(
+                        text = "构图评分",
+                        color = Color.White.copy(alpha = 0.7f),
+                        fontSize = 13.sp
+                    )
+                    Text(
+                        text = "${result.score} 分",
+                        color = Color(0xFFFFD54F),
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
-            )
+            }
+            sceneAdvice?.let {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = it,
+                    color = Color.White.copy(alpha = 0.85f),
+                    fontSize = 13.sp,
+                    maxLines = 2
+                )
+            }
+        }
 
-            IconButton(
-                onClick = {
-                    val last = lastShot(context)
-                    if (last != null) onOpenEditor(last.absolutePath)
-                },
-                modifier = Modifier.size(44.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.12f))
+        // ===== 底部控制区 =====
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.75f))))
+                .padding(horizontal = 20.dp, vertical = 18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            FilterStrip(
+                selected = filterIndex,
+                blurEnabled = blurEnabled,
+                onSelect = { filterIndex = it },
+                onToggleBlur = { blurEnabled = !blurEnabled }
+            )
+            Spacer(Modifier.height(14.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(Icons.Filled.PhotoLibrary, contentDescription = "图库", tint = Color.White)
+                IconButton(
+                    onClick = { },
+                    modifier = Modifier.size(44.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.12f))
+                ) {
+                    Icon(Icons.Filled.Settings, contentDescription = "设置", tint = Color.White)
+                }
+
+                ShutterButton(
+                    onClick = {
+                        val cap = imageCapture.value ?: return@ShutterButton
+                        val file = File(context.cacheDir, "shot_${System.currentTimeMillis()}.jpg")
+                        cap.takePicture(
+                            ImageCapture.OutputFileOptions.Builder(file).build(),
+                            ContextCompat.getMainExecutor(context),
+                            object : ImageCapture.OnImageSavedCallback {
+                                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                                    onCapture(file.absolutePath)
+                                }
+                                override fun onError(exc: ImageCaptureException) {
+                                    Log.e("Camera", "capture error", exc)
+                                }
+                            }
+                        )
+                    }
+                )
+
+                IconButton(
+                    onClick = {
+                        val last = lastShot(context)
+                        if (last != null) onOpenEditor(last.absolutePath)
+                    },
+                    modifier = Modifier.size(44.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.12f))
+                ) {
+                    Icon(Icons.Filled.PhotoLibrary, contentDescription = "图库", tint = Color.White)
+                }
             }
         }
     }
 }
-
-// ============ 子组件 ============
 
 /** 评分圆环（带动画） */
 @Composable
@@ -224,13 +231,13 @@ private fun ScoreRing(score: Int) {
         label = "score"
     )
     Canvas(modifier = Modifier.size(52.dp)) {
-        val stroke = 4.dp.toPx()
-        val sweep = animated * 360f
+        val strokeW = 4.dp.toPx()
         drawArc(
             color = Color.White.copy(alpha = 0.15f),
-            startAngle = -90f, sweepAngle = 360f,
+            startAngle = -90f,
+            sweepAngle = 360f,
             useCenter = false,
-            style = Stroke(width = stroke)
+            style = Stroke(width = strokeW)
         )
         val color = when {
             score >= 80 -> Color(0xFF4CAF50)
@@ -239,14 +246,15 @@ private fun ScoreRing(score: Int) {
         }
         drawArc(
             color = color,
-            startAngle = -90f, sweepAngle = sweep,
+            startAngle = -90f,
+            sweepAngle = animated * 360f,
             useCenter = false,
-            style = Stroke(width = stroke, cap = StrokeCap.Round)
+            style = Stroke(width = strokeW, cap = StrokeCap.Round)
         )
     }
 }
 
-/** 大快门按钮（涟漪反馈） */
+/** 大快门按钮 */
 @Composable
 private fun ShutterButton(onClick: () -> Unit) {
     Box(
@@ -268,7 +276,7 @@ private fun ShutterButton(onClick: () -> Unit) {
     }
 }
 
-/** 滤镜条（4 种滤镜 + 虚化开关） */
+/** 滤镜条 */
 private val filterNames = listOf("原图", "暖调", "镜像", "黑白")
 
 @Composable
@@ -300,7 +308,6 @@ private fun FilterStrip(
                 )
             }
         }
-        // 虚化开关
         item {
             val active = blurEnabled
             Column(
@@ -326,39 +333,6 @@ private fun FilterStrip(
         }
     }
 }
-
-// ============ 帧分析逻辑（复用现有引擎） ============
-
-private fun analyzeFrame(
-    proxy: ImageProxy,
-    analyzer: CompositionAnalyzer,
-    sceneLabeler: SceneLabeler,
-    uiScope: CoroutineScope,
-    onResult: (CompositionResult, String?) -> Unit
-) {
-    val bitmap = BitmapUtils.proxyToBitmap(proxy) ?: return
-    proxy.close()
-    val scaled = BitmapUtils.scaleDown(bitmap, 320)
-    val r = analyzer.analyze(scaled)
-    bitmap.recycle()
-    var advice: String? = null
-    // 低频 ML Kit 标注（每 45 帧）
-    frameAnalysisCounter++
-    if (frameAnalysisCounter % 45 == 0) {
-        val bmpCopy = scaled.copy(Bitmap.Config.ARGB_8888, false)
-        uiScope.launch {
-            val labels = sceneLabeler.label(bmpCopy)
-            advice = sceneLabeler.adviceFrom(labels)
-            onResult(r, advice)
-            bmpCopy.recycle()
-        }
-    } else {
-        onResult(r, null)
-    }
-    scaled.recycle()
-}
-
-private var frameAnalysisCounter = 0
 
 private fun lastShot(ctx: android.content.Context): File? {
     val dir = ctx.cacheDir
