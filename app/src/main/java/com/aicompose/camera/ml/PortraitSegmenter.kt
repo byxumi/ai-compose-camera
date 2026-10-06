@@ -24,7 +24,7 @@ class PortraitSegmenter(context: Context) {
         val options = ImageSegmenter.ImageSegmenterOptions.builder()
             .setBaseOptions(base)
             .setRunningMode(RunningMode.IMAGE)
-            .setOutputType(ImageSegmenter.OutputType.CONFIDENCE_MASK)
+            .setOutputConfidenceMasks(true)
             .build()
         ImageSegmenter.createFromOptions(context, options)
     }
@@ -38,7 +38,10 @@ class PortraitSegmenter(context: Context) {
             runCatching {
                 val mpImage: MPImage = BitmapImageBuilder(src).build()
                 val result = segmenter.segment(mpImage)
-                val mask = result.confidenceMasks().first().buffer as FloatBuffer
+                val maskImage = result.confidenceMasks().first()
+                val maskW = maskImage.width
+                val maskH = maskImage.height
+                val mask = maskImage.buffer as FloatBuffer
                 val maskArr = FloatArray(mask.remaining())
                 mask.get(maskArr)
 
@@ -52,9 +55,9 @@ class PortraitSegmenter(context: Context) {
                 blurred.getPixels(pxBlur, 0, w, 0, 0, w, h)
                 for (y in 0 until h) {
                     for (x in 0 until w) {
-                        val mx = (x * mask.columns() / w).coerceIn(0, mask.columns() - 1)
-                        val my = (y * mask.rows() / h).coerceIn(0, mask.rows() - 1)
-                        val conf = maskArr[my * mask.columns() + mx]
+                        val mx = (x * maskW / w).coerceIn(0, maskW - 1)
+                        val my = (y * maskH / h).coerceIn(0, maskH - 1)
+                        val conf = maskArr[my * maskW + mx]
                         pxOut[y * w + x] = if (conf >= threshold) pxOut[y * w + x] else pxBlur[y * w + x]
                     }
                 }
