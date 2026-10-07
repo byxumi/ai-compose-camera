@@ -28,6 +28,7 @@ import com.aicompose.camera.compose.CompositionAnalyzer
 import com.aicompose.camera.ml.OnnxClassifier
 import com.aicompose.camera.ml.Lut3D
 import com.aicompose.camera.ml.PortraitSegmenter
+import com.aicompose.camera.util.WatermarkUtil
 import com.aicompose.camera.mlkit.SceneLabeler
 import com.aicompose.camera.util.BitmapUtils
 import kotlinx.coroutines.Dispatchers
@@ -50,6 +51,8 @@ fun EditScreen(
     var mirrored by remember { mutableStateOf(false) }
     var filterMode by remember { mutableIntStateOf(0) }
     var lutIndex by remember { mutableIntStateOf(0) }
+    var noiseEnabled by remember { mutableStateOf(false) }
+    var watermarkMode by remember { mutableIntStateOf(0) }
     var blurRadius by remember { mutableIntStateOf(0) }
     var analysisText by remember { mutableStateOf("") }
     var analyzing by remember { mutableStateOf(false) }
@@ -199,12 +202,30 @@ fun EditScreen(
                         bitmap?.let { bitmap = applyFilters(it) }
                     }
                 }
+                EditTool(if (noiseEnabled) Icons.Filled.Grain else Icons.Filled.Grain, "胶片噪点") {
+                    noiseEnabled = !noiseEnabled
+                    bitmap?.let { bmp ->
+                        scope.launch {
+                            val out = if (noiseEnabled) WatermarkUtil.addGrain(bmp, 18) else bmp.copy(Bitmap.Config.ARGB_8888, true)
+                            kotlinx.coroutines.withContext(Dispatchers.Main) { bitmap = out }
+                        }
+                    }
+                }
                 EditTool(Icons.Filled.ColorLens, "LUT滤镜") {
                     lutIndex = (lutIndex + 1) % 20
                     bitmap?.let { bmp ->
                         scope.launch {
                             val out = if (lutIndex == 0) bmp.copy(Bitmap.Config.ARGB_8888, true)
                             else Lut3D(context).apply(bmp, lutIndex)
+                            kotlinx.coroutines.withContext(Dispatchers.Main) { bitmap = out }
+                        }
+                    }
+                }
+                EditTool(Icons.Filled.TextFields, "艺术字") {
+                    watermarkMode = (watermarkMode + 1) % 4
+                    bitmap?.let { bmp ->
+                        scope.launch {
+                            val out = WatermarkUtil.addWatermark(context, bmp, watermarkMode)
                             kotlinx.coroutines.withContext(Dispatchers.Main) { bitmap = out }
                         }
                     }

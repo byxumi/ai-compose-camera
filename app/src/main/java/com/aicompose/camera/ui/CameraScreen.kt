@@ -42,6 +42,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.aicompose.camera.compose.CompositionAnalyzer
 import com.aicompose.camera.compose.CompositionResult
+import com.aicompose.camera.ml.FaceDetectorHelper
+import com.aicompose.camera.ml.Lut3D
 import com.aicompose.camera.mlkit.SceneLabeler
 import com.aicompose.camera.util.BitmapUtils
 import kotlinx.coroutines.CoroutineScope
@@ -62,12 +64,14 @@ fun CameraScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     val analyzer = remember { CompositionAnalyzer() }
     val sceneLabeler = remember { SceneLabeler(context) }
+    val faceDetector = remember { FaceDetectorHelper(context) }
     val uiScope = rememberCoroutineScope()
 
     var result by remember { mutableStateOf(CompositionResult.empty()) }
     var sceneAdvice by remember { mutableStateOf<String?>(null) }
     var filterIndex by remember { mutableIntStateOf(0) }
     var blurEnabled by remember { mutableStateOf(false) }
+    val lut = remember { Lut3D(context) }
     val imageCapture = remember { mutableStateOf<ImageCapture?>(null) }
     var frameCount by remember { mutableIntStateOf(0) }
 
@@ -103,7 +107,8 @@ fun CameraScreen(
                             val copy = scaled.copy(Bitmap.Config.ARGB_8888, false)
                             uiScope.launch {
                                 val labels = sceneLabeler.label(copy)
-                                sceneAdvice = sceneLabeler.adviceFrom(labels)
+                                val faces = faceDetector.detect(copy)
+                                sceneAdvice = faceDetector.adviceFrom(faces) ?: sceneLabeler.adviceFrom(labels)
                                 copy.recycle()
                             }
                         }
@@ -193,12 +198,24 @@ fun CameraScreen(
                     onClick = {
                         val cap = imageCapture.value ?: return@ShutterButton
                         val file = File(context.cacheDir, "shot_${System.currentTimeMillis()}.jpg")
+                        val finalFile = if (filterIndex == 0) file else {
+                            // 拍照后先应用 LUT 再进编辑页
+                            val captured = BitmapUtils.loadScaled(file.absolutePath, 2048)
+                            if (captured != null) {
+                                val styled = lut.apply(captured, filterIndex)
+                                captured.recycle()
+                                val styledFile = File(context.cacheDir, "styled_${System.currentTimeMillis()}.jpg")
+                                java.io.FileOutputStream(styledFile).use { styled.compress(Bitmap.CompressFormat.JPEG, 92, it) }
+                                styled.recycle()
+                                styledFile
+                            } else file
+                        }
                         cap.takePicture(
-                            ImageCapture.OutputFileOptions.Builder(file).build(),
+                            ImageCapture.OutputFileOptions.Builder(finalFile).build(),
                             ContextCompat.getMainExecutor(context),
                             object : ImageCapture.OnImageSavedCallback {
                                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                                    onCapture(file.absolutePath)
+                                    onCapture(finalFile.absolutePath)
                                 }
                                 override fun onError(exc: ImageCaptureException) {
                                     Log.e("Camera", "capture error", exc)
@@ -277,7 +294,7 @@ private fun ShutterButton(onClick: () -> Unit) {
 }
 
 /** 滤镜条 */
-private val filterNames = listOf("原图", "暖调", "镜像", "黑白")
+private val filterNames = listOf("原图", "王家卫港风", "德味徕卡", "电影情绪", "城市黑金", "青橙夜景", "黄金时刻", "奶油褪色")
 
 @Composable
 private fun FilterStrip(
