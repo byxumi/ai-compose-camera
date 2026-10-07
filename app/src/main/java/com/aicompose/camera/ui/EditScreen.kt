@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.aicompose.camera.compose.CompositionAnalyzer
 import com.aicompose.camera.ml.OnnxClassifier
+import com.aicompose.camera.ml.Lut3D
 import com.aicompose.camera.ml.PortraitSegmenter
 import com.aicompose.camera.mlkit.SceneLabeler
 import com.aicompose.camera.util.BitmapUtils
@@ -48,6 +49,7 @@ fun EditScreen(
     var rotation by remember { mutableIntStateOf(0) }
     var mirrored by remember { mutableStateOf(false) }
     var filterMode by remember { mutableIntStateOf(0) }
+    var lutIndex by remember { mutableIntStateOf(0) }
     var blurRadius by remember { mutableIntStateOf(0) }
     var analysisText by remember { mutableStateOf("") }
     var analyzing by remember { mutableStateOf(false) }
@@ -195,6 +197,16 @@ fun EditScreen(
                         }
                     } else {
                         bitmap?.let { bitmap = applyFilters(it) }
+                    }
+                }
+                EditTool(Icons.Filled.ColorLens, "LUT滤镜") {
+                    lutIndex = (lutIndex + 1) % 20
+                    bitmap?.let { bmp ->
+                        scope.launch {
+                            val out = if (lutIndex == 0) bmp.copy(Bitmap.Config.ARGB_8888, true)
+                            else Lut3D(context).apply(bmp, lutIndex)
+                            kotlinx.coroutines.withContext(Dispatchers.Main) { bitmap = out }
+                        }
                     }
                 }
                 EditTool(Icons.Filled.Insights, "AI分析", loading = analyzing) {
