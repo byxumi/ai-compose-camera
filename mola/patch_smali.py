@@ -18,6 +18,36 @@ def patch_mainactivity(path):
     assert old in s, "MainActivity block missing"
     open(path, "w").write(s.replace(old, new, 1))
 
+def patch_update_gu1(path):
+    s = open(path).read()
+    old = """    move-result-object p0
+
+    .line 138
+    if-nez p0, :cond_6"""
+    new = """    move-result-object p0
+
+    .line 138
+    # [MOD] \u79fb\u9664\u4e91\u7aef\u7248\u672c\u66f4\u65b0\uff1a\u8df3\u8fc7\u66f4\u65b0\u5f39\u7a97
+    goto :goto_3
+    if-nez p0, :cond_6"""
+    assert old in s, "gu1 update entry missing"
+    open(path, "w").write(s.replace(old, new, 1))
+
+def patch_update_ob(path):
+    s = open(path).read()
+    old = """    move-result-object p0
+
+    .line 654
+    if-nez p0, :cond_14"""
+    new = """    move-result-object p0
+
+    .line 654
+    # [MOD] \u79fb\u9664\u4e91\u7aef\u7248\u672c\u66f4\u65b0\uff08\u7b2c\u4e8c\u89e6\u53d1\u70b9\uff09
+    goto :goto_e
+    if-nez p0, :cond_14"""
+    assert old in s, "ob update entry missing"
+    open(path, "w").write(s.replace(old, new, 1))
+
 def patch_e4(path):
     s = open(path).read()
     s = s.replace(
@@ -31,4 +61,6 @@ def patch_e4(path):
 if __name__ == "__main__":
     patch_mainactivity(sys.argv[1])
     patch_e4(sys.argv[2])
+    patch_update_gu1(sys.argv[3])
+    patch_update_ob(sys.argv[4])
     print("patched")

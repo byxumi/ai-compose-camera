@@ -15,5 +15,11 @@
 4. python zipfile 替换 classes.dex + 删旧签名
 5. `apksigner sign` 签名（v2）
 
+## 移除云端版本更新
+- `gu1.smali`：更新弹窗触发点（`if-nez p0, :cond_6`）→ `goto` 跳过
+- `ob.smali`：第二更新弹窗触发点（`if-nez p0, :cond_14`）→ `goto` 跳过
+- 效果：云端最新版本检查流程永不进入弹窗，不提示、不强制更新
+
 ## 产物
-`Mola相机-解除限制版.apk`（签名 v2，可安装）
+- `Mola相机-解除限制版.apk`（AI试用无限 + 会员永久）
+- `Mola相机-解除限制-无更新版.apk`（上述 + 移除云端版本更新）
