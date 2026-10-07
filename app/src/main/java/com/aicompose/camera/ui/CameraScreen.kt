@@ -198,17 +198,18 @@ fun CameraScreen(
                     onClick = {
                         val cap = imageCapture.value ?: return@ShutterButton
                         val file = File(context.cacheDir, "shot_${System.currentTimeMillis()}.jpg")
-                        val finalFile = if (filterIndex == 0) file else {
-                            // 拍照后先应用 LUT 再进编辑页
-                            val captured = BitmapUtils.loadScaled(file.absolutePath, 2048)
-                            if (captured != null) {
-                                val styled = lut.apply(captured, filterIndex)
-                                captured.recycle()
-                                val styledFile = File(context.cacheDir, "styled_${System.currentTimeMillis()}.jpg")
-                                java.io.FileOutputStream(styledFile).use { styled.compress(Bitmap.CompressFormat.JPEG, 92, it) }
-                                styled.recycle()
-                                styledFile
-                            } else file
+                        val finalFile = if (filterIndex == 0) file else File(context.cacheDir, "styled_${System.currentTimeMillis()}.jpg")
+                        if (filterIndex != 0) {
+                            val idx = filterIndex
+                            uiScope.launch {
+                                val captured = BitmapUtils.loadScaled(file.absolutePath, 2048)
+                                if (captured != null) {
+                                    val styled = lut.apply(captured, idx)
+                                    captured.recycle()
+                                    java.io.FileOutputStream(finalFile).use { styled.compress(Bitmap.CompressFormat.JPEG, 92, it) }
+                                    styled.recycle()
+                                }
+                            }
                         }
                         cap.takePicture(
                             ImageCapture.OutputFileOptions.Builder(finalFile).build(),

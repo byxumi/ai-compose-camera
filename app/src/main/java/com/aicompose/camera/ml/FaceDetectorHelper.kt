@@ -66,6 +66,9 @@ class FaceDetectorHelper(context: Context) {
 }
 
 /** 轻量 await 辅助 */
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+
 private suspend fun <T> com.google.android.gms.tasks.Task<T>.await(): T =
     kotlin.coroutines.suspendCoroutine { cont ->
         addOnSuccessListener { cont.resume(it) }
