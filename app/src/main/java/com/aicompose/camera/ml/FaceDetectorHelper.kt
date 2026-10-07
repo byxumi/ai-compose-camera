@@ -9,6 +9,8 @@ import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 /**
  * ML Kit 人脸检测 —— 人脸/眼睛关键点辅助构图
@@ -66,9 +68,6 @@ class FaceDetectorHelper(context: Context) {
 }
 
 /** 轻量 await 辅助 */
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-
 private suspend fun <T> com.google.android.gms.tasks.Task<T>.await(): T =
     kotlin.coroutines.suspendCoroutine { cont ->
         addOnSuccessListener { cont.resume(it) }

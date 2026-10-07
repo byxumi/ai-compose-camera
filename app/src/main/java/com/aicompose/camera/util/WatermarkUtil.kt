@@ -32,7 +32,7 @@ object WatermarkUtil {
                 2 -> w * 0.028f
                 else -> w * 0.050f
             }
-            setShadowLayer(textSize / 3f, 0f, textSize / 6f, Color.Black)
+            setShadowLayer(textSize / 3f, 0f, textSize / 6f, android.graphics.Color.BLACK)
             typeface = when (mode) {
                 1 -> Typeface.createFromAsset(ctx.assets, "fonts/Allura-Regular.ttf")
                 2 -> Typeface.createFromAsset(ctx.assets, "fonts/Damion-Regular.ttf")
